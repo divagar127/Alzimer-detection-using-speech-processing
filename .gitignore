@@ -1,0 +1,13 @@
+# Large media / audio files
+*.wav
+*.mp3
+*.flac
+*.ogg
+
+# Environment & IDE
+.vscode/
+.idea/
+*.pyc
+__pycache__/
+.DS_Store
+Thumbs.db
