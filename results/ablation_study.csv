@@ -1,0 +1,7 @@
+Feature Representation,Model,Accuracy (%),F1-Score,_raw_acc
+Acoustic Only (123-dim),Logistic Regression,61.46% ± 4.68%,0.6390,0.6146167557932263
+Acoustic Only (123-dim),SVM (RBF),52.99% ± 2.67%,0.6617,0.5299465240641712
+Deep Embeddings Only (512-dim),Logistic Regression,73.51% ± 10.34%,0.7396,0.7351158645276292
+Deep Embeddings Only (512-dim),SVM (RBF),54.22% ± 3.38%,0.6803,0.5422459893048128
+Gated Cross-Attention Fused,Logistic Regression,100.00% ± 0.00%,1.0000,1.0
+Gated Cross-Attention Fused,SVM (RBF),99.39% ± 1.21%,0.9943,0.9939393939393939
