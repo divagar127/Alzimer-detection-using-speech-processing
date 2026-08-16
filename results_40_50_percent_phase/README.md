@@ -1,6 +1,6 @@
 # Results & Evaluation Artifacts - 40% to 50% Project Phase
 
-This directory contains the experimental evaluation metrics, comparison tables, and baseline performance benchmarks achieved during the **40% to 50% completion phase** of the Alzheimer's Detection Speech Processing Project.
+This directory contains all experimental evaluation metrics, confusion matrix plots, ROC-AUC curve plots, and comparison tables achieved during the **40% to 50% completion phase** of the Alzheimer's Detection Speech Processing Project.
 
 ---
 
@@ -37,4 +37,15 @@ In the 40-50% phase, the pipeline implemented:
 | **Our 40-50% Pipeline (PCA + PyTorch DNN)** | Acoustic (123) + Whisper (1024) | **70.48%** | **0.7209** |
 | **Our 40-50% Pipeline (PCA + SVM RBF)** | Acoustic (123) + Whisper (1024) | **66.29%** | **0.6950** |
 
-> **Key Achievement of the 40-50% Phase:** The 70.52% accuracy and 0.7815 ROC-AUC achieved by Logistic Regression and PyTorch DNN significantly outperformed the official IS2021 ADReSSo acoustic baseline (65.1%).
+---
+
+## 🖼️ Saved Plot Visualizations (40-50% Phase)
+
+All 5 confusion matrix heatmaps and the ROC-AUC curve plot for the 40-50% phase are stored in `results_40_50_percent_phase/plots/`:
+
+- 📈 **ROC-AUC Curves Plot:** [`plots/roc_auc_curves_phase1.png`](file:///d:/ADReSSo_Recovered/results_40_50_percent_phase/plots/roc_auc_curves_phase1.png)
+- 🔷 **Logistic Regression Confusion Matrix:** [`plots/cm_logistic_regression_phase1.png`](file:///d:/ADReSSo_Recovered/results_40_50_percent_phase/plots/cm_logistic_regression_phase1.png)
+- 🧠 **PyTorch DNN Confusion Matrix:** [`plots/cm_dnn_phase1.png`](file:///d:/ADReSSo_Recovered/results_40_50_percent_phase/plots/cm_dnn_phase1.png)
+- ⚡ **SVM RBF Confusion Matrix:** [`plots/cm_svm_rbf_phase1.png`](file:///d:/ADReSSo_Recovered/results_40_50_percent_phase/plots/cm_svm_rbf_phase1.png)
+- 🌲 **Random Forest Confusion Matrix:** [`plots/cm_random_forest_phase1.png`](file:///d:/ADReSSo_Recovered/results_40_50_percent_phase/plots/cm_random_forest_phase1.png)
+- 🌊 **PyTorch 1D-CNN Confusion Matrix:** [`plots/cm_1dcnn_phase1.png`](file:///d:/ADReSSo_Recovered/results_40_50_percent_phase/plots/cm_1dcnn_phase1.png)
