@@ -19,7 +19,7 @@
 
 % Title Page Information
 \title[Alzheimer's Detection via Speech Processing]{Alzheimer's Disease Detection Using Speech Processing with Explainable AI}
-\subtitle{Mid-Semester Project Review (40--50\% Completion Progress)}
+\subtitle{Mid-Semester Project Review}
 \author[Divagar, Abhishek, Prem]{
     \textbf{Divagar S} [CB.SC.U4AIE23223] \\
     \textbf{Abhishek Pandey} [CB.SC.U4AIE23205] \\
@@ -43,74 +43,75 @@
 % ===== Slide 3: Introduction and Motivation =====
 \section{Introduction}
 \begin{frame}{Introduction and Motivation}
-    \begin{block}{Clinical Context}
-        Alzheimer's Disease (AD) is a progressive neurodegenerative disorder leading to irreversible memory loss, linguistic degradation, and cognitive impairment.
+    \begin{block}{Background Context}
+        Alzheimer's Disease (AD) is a progressive brain disorder that gradually affects memory, thinking skills, and spoken language.
     \end{block}
     \begin{itemize}
-        \item \textbf{Motivation:} Conventional clinical diagnostics depend on expensive neuroimaging (Brain MRI/PET) or invasive lumbar punctures. Spontaneous speech analysis offers a \textbf{non-invasive, rapid, and low-cost} screening alternative.
-        \item \textbf{Acoustic Biomarkers:} Early AD manifests through subtle speech impairments—pitch instability, micro-pauses, dysfluency, reduced harmonicity, and articulation slowing.
-        \item \textbf{Explainable AI (XAI) Imperative:} Integrating transparent machine learning ensures clinical trust and interpretable diagnostic reasoning for clinicians.
+        \item \textbf{Motivation:} Brain scans (MRI/PET) and clinical visits are expensive, time-consuming, and hard to access. Analyzing spontaneous speech provides a non-invasive, quick, and low-cost alternative for early screening.
+        \item \textbf{Speech Indicators:} Subtle changes like longer pauses, unstable pitch, slower speech rate, and reduced voice clarity can indicate early cognitive decline.
+        \item \textbf{Need for Explainability:} Adding Explainable AI (XAI) helps doctors understand why a model flagged a patient, building trust in model predictions.
     \end{itemize}
 \end{frame}
 
 % ===== Slide 4: Problem Definition =====
 \section{Problem Definition}
 \begin{frame}{Problem Definition}
-    \begin{alertblock}{The Core Research Challenge}
-        Developing an automated, non-invasive, and interpretable AD detection system that overcomes diagnostic bottlenecks and surpasses traditional acoustic baselines.
+    \begin{alertblock}{Main Challenges in AD Detection}
+        Current diagnostic methods are costly and subjective, while standard AI models often act as unexplainable black boxes.
     \end{alertblock}
     
     \begin{enumerate}
-        \item \textbf{Clinical Diagnostic Bottlenecks:} Neuroimaging (MRI/PET) is costly and inaccessible in rural healthcare. Cognitive screeners (MMSE, MoCA) suffer from subjective scorer bias and low sensitivity to early-stage onset.
-        \item \textbf{Limitations of Traditional Speech Feature Sets:} Standard hand-engineered acoustic features (MFCCs, jitter, shimmer) alone fail to capture multi-scale temporal dependencies and deep semantic representations of AD speech.
-        \item \textbf{Lack of Interpretability:} Black-box deep networks do not explain \textit{why} a subject is flagged, hindering clinical adoption.
+        \item \textbf{High Cost and Limited Access:} MRI/PET brain scans are expensive and not easily available in primary healthcare clinics.
+        \item \textbf{Subjective Cognitive Tests:} Standard written questionnaires (like MMSE) depend on clinician evaluation and take time to conduct.
+        \item \textbf{Limitations of Basic Audio Features:} Traditional features like pitch or standard MFCCs alone cannot capture complex speech patterns associated with Alzheimer's.
+        \item \textbf{Lack of Model Transparency:} Machine learning models must provide understandable explanations before they can be used in medical applications.
     \end{enumerate}
 \end{frame}
 
 % ===== Slide 5: Project Overview =====
-\begin{frame}{Project Architecture Flow (40--50\% Scope)}
+\begin{frame}{Project Architecture \& Workflow}
     \begin{center}
-        \textbf{\Large Pipeline Architecture Flow}
+        \textbf{\Large System Pipeline Overview}
     \end{center}
     \vfill
-    \begin{block}{Implemented Processing Pipeline}
+    \begin{block}{Pipeline Flow (Mid-Term Stage)}
     \begin{itemize}
-        \item \textbf{Audio Input:} Spontaneous speech recordings from ADReSSo Challenge dataset (.wav format).
-        \item \textbf{Stage 1 (Preprocessing):} 16kHz resampling, spectral gating noise reduction, VAD silence removal.
-        \item \textbf{Stage 2 (Feature Extraction):} 123-dim hand-crafted acoustic features + 1024-dim Whisper deep embeddings.
-        \item \textbf{Stage 3 (Feature Fusion):} Multimodal feature concatenation + PCA reduction to 318 dimensions.
-        \item \textbf{Stage 4 \& 5 (Classification \& Evaluation):} ML (SVM, RF, LR) + DL (PyTorch 3-Layer DNN, 1D-CNN) evaluated via \textbf{5-Fold Stratified Cross-Validation}.
+        \item \textbf{Speech Input:} Spontaneous audio recordings (.wav format) from the ADReSSo 2021 dataset.
+        \item \textbf{Audio Preprocessing:} Converting to 16kHz, noise reduction, and removing silent gaps using voice activity detection.
+        \item \textbf{Feature Extraction:} Extracting 123 physical acoustic features (MFCCs, Pitch, HNR) + Whisper deep audio embeddings.
+        \item \textbf{Feature Fusion:} Combining acoustic features and deep embeddings using PCA (reduced to 318 features).
+        \item \textbf{Model Training \& Evaluation:} Training ML and PyTorch DL models using 5-Fold Stratified Cross-Validation.
     \end{itemize}
     \end{block}
 \end{frame}
 
 % ===== Slide 6: Gaps Identified =====
 \section{Gaps Identified}
-\begin{frame}{Gaps Identified in Existing Literature}
-    \begin{alertblock}{Key Research Gaps}
-        Critical limitations present in existing computational healthcare literature:
+\begin{frame}{Gaps Identified in Current Research}
+    \begin{alertblock}{Research Gaps}
+        Key issues observed in existing literature that our work addresses:
     \end{alertblock}
     \begin{itemize}
-        \item \textbf{Underutilization of Deep Multimodal Fusion:} Prior studies rely either purely on hand-crafted acoustic parameters or uninterpretable text transcripts, missing cross-modal interactions.
-        \item \textbf{Black-Box Clinical Barrier:} Existing high-performing models lack feature attribution (SHAP/LIME), making predictions opaque to medical practitioners.
-        \item \textbf{Acoustic Baseline Underperformance:} The official ADReSSo acoustic baseline (eGeMAPS + SVM) achieves only \textbf{65.1\% accuracy}, highlighting the need for advanced deep embedding integration.
-        \item \textbf{Evaluation Rigor:} High variance in small speech corpora requires strict \textbf{5-Fold Stratified Cross-Validation} to prevent data leakage.
+        \item \textbf{Lack of Explanation:} Most speech-based AI models operate as black boxes without explaining feature importance to clinicians.
+        \item \textbf{Low Accuracy of Simple Acoustic Features:} Official ADReSSo acoustic baselines (eGeMAPS + SVM) achieve only ~65.1\% accuracy.
+        \item \textbf{Need for Feature Combination:} Combining hand-crafted acoustic properties with deep audio embeddings improves model sensitivity.
+        \item \textbf{Small Dataset Variance:} Small speech corpora require careful 5-fold cross-validation to prevent data leakage and overfitting.
     \end{itemize}
 \end{frame}
 
 % ===== Slide 7: Objectives =====
 \section{Objectives}
-\begin{frame}{Objectives \& Technical Scope}
-    \begin{block}{Main Research Objective}
-        To design, implement, and validate an automated speech processing pipeline for Alzheimer's Detection that outperforms official challenge baselines while establishing a foundation for Explainable AI.
+\begin{frame}{Project Objectives}
+    \begin{block}{Main Goal}
+        To build a speech-based machine learning pipeline for Alzheimer's Detection that outperforms standard baselines and provides clear explanations.
     \end{block}
     
-    \textbf{Specific Milestone Objectives (Completed in 40--50\% Phase):}
+    \textbf{Mid-Term Milestone Objectives (Completed):}
     \begin{enumerate}
-        \item Build a standardized audio preprocessing pipeline (spectral denoising, 16kHz resampling, VAD segmentation).
-        \item Extract a 123-dimensional acoustic feature space (40 MFCCs, Deltas, Pitch F0 statistics, HNR) combined with deep Whisper embeddings.
-        \item Implement PCA-based multimodal feature fusion (318-dim representation space).
-        \item Train and systematically evaluate ML (Logistic Regression, SVM RBF, Random Forest) and DL (PyTorch DNN, 1D-CNN) models using 5-Fold Stratified CV.
+        \item Clean and preprocess speech audio (16kHz resampling, noise reduction, silence removal).
+        \item Extract 123 physical acoustic features (MFCCs, Pitch statistics, HNR) and Whisper audio features.
+        \item Combine features using PCA dimensionality reduction (318 components).
+        \item Evaluate Logistic Regression, SVM, Random Forest, PyTorch DNN, and 1D-CNN models using 5-Fold Stratified Cross-Validation.
     \end{enumerate}
 \end{frame}
 
@@ -119,16 +120,16 @@
 \begin{frame}{Detailed Methodology \& Technical Workflow}
     \begin{columns}[T]
         \column{0.52\textwidth}
-        \textbf{5-Stage Implementation Workflow:}
+        \textbf{5-Stage Pipeline Workflow:}
         \begin{enumerate}
-            \item \textbf{Data Preprocessing:} Resampling to 16kHz, spectral noise reduction via \texttt{noisereduce}, voice activity detection (\texttt{librosa.effects.split}, top\_db=25).
+            \item \textbf{Audio Preprocessing:} Converting to 16kHz, spectral noise reduction (\texttt{noisereduce}), silence trimming (\texttt{librosa.effects.split}, top\_db=25).
             \item \textbf{Feature Extraction:} 
                 \begin{itemize}
-                    \item Acoustic: 40 MFCCs + $\Delta$ + $\Delta^2$, Pitch F0 (Mean, Std), Harmonics-to-Noise Ratio (HNR).
-                    \item Deep: 1024-dim Whisper pretrained representations.
+                    \item Acoustic (123 features): MFCCs (1-40 + Deltas), Pitch F0 (Mean, Std), HNR.
+                    \item Deep Features: Whisper pretrained encoder embeddings.
                 \end{itemize}
-            \item \textbf{Feature Fusion:} Concatenation (1147-dim) $\rightarrow$ StandardScaler $\rightarrow$ PCA (318 dimensions).
-            \item \textbf{Classification Models:} SVM (RBF), Logistic Regression, Random Forest, PyTorch 3-Layer DNN, PyTorch 1D-CNN.
+            \item \textbf{Feature Fusion:} Concatenation $\rightarrow$ StandardScaler $\rightarrow$ PCA (318 dimensions).
+            \item \textbf{Model Training:} SVM (RBF), Logistic Regression, Random Forest, PyTorch 3-Layer DNN, 1D-CNN.
             \item \textbf{Evaluation:} 5-Fold Stratified Cross-Validation.
         \end{enumerate}
         
@@ -137,15 +138,15 @@
         \begin{center}
             \fbox{\parbox{0.95\textwidth}{\centering
                 \small
-                \textbf{Raw Speech Audio (.wav)} \\
+                \textbf{Speech Recordings (.wav)} \\
                 $\downarrow$ \\
-                \textbf{16kHz Denoising \& VAD} \\
+                \textbf{16kHz Preprocessing \& VAD} \\
                 $\downarrow$ \\
                 \textbf{Acoustic (123d) + Whisper (1024d)} \\
                 $\downarrow$ \\
                 \textbf{StandardScaler + PCA (318d)} \\
                 $\downarrow$ \\
-                \textbf{ML \& PyTorch DL Classifiers} \\
+                \textbf{ML \& PyTorch DL Models} \\
                 $\downarrow$ \\
                 \textbf{5-Fold Stratified CV Output}
             }}
@@ -155,32 +156,32 @@
 
 % ===== Slide 9: Dataset Description =====
 \section{Dataset}
-\begin{frame}{Dataset Characteristics (IS2021 ADReSSo Challenge)}
+\begin{frame}{Dataset Description (IS2021 ADReSSo Corpus)}
     \begin{table}
     \centering
     \begin{tabular}{lcccc}
         \toprule
-        \textbf{Sub-Dataset} & \textbf{Total Samples} & \textbf{Class Breakdown} & \textbf{Audio Specs} & \textbf{Target Task} \\
+        \textbf{Sub-Dataset} & \textbf{Samples} & \textbf{Class Balance} & \textbf{Audio Specs} & \textbf{Target Task} \\
         \midrule
-        Diagnosis Train & 166 Audio Files & 87 AD / 79 CN & 16kHz Mono .wav & AD vs Control \\
-        Progression Train & 73 Audio Files & 15 Decline / 58 No-Dec & 16kHz Mono .wav & Longitudinal Tracking \\
-        Challenge Test & 32 Audio Files & Unlabelled & 16kHz Mono .wav & Final Evaluation \\
+        Diagnosis Train & 166 Files & 87 AD / 79 Healthy & 16kHz Mono .wav & AD vs Healthy \\
+        Progression Train & 73 Files & 15 Decline / 58 Stable & 16kHz Mono .wav & Decline Tracking \\
+        Challenge Test & 32 Files & Unlabelled & 16kHz Mono .wav & Final Evaluation \\
         \bottomrule
     \end{tabular}
-    \caption{ADReSSo Speech Corpus specifications used in project experiments.}
+    \caption{ADReSSo speech dataset details used in our project.}
     \end{table}
     \vfill
     \begin{itemize}
-        \item \textbf{Task Protocol:} Spontaneous speech collected during standardized Cookie Theft picture description tasks.
-        \item \textbf{Data Integrity:} All raw original audio datasets remain 100\% untouched and read-only. Preprocessed audio exported separately to \texttt{processed\_audio/}.
+        \item \textbf{Speech Task:} Spontaneous speech recorded during the Cookie Theft picture description test.
+        \item \textbf{Data Care:} Original dataset audio files remain untouched. Preprocessed clean files are saved separately in \texttt{processed\_audio/}.
     \end{itemize}
 \end{frame}
 
 % ===== Slide 10: Preliminary Results (Part 1) =====
 \section{Results}
 \begin{frame}{Experimental Results (40--50\% Completion Stage)}
-    \begin{block}{5-Fold Stratified Cross-Validation Performance Summary}
-        \textit{Evaluated on 166 ADReSSo spontaneous speech samples (318-dim PCA Fused Space)}
+    \begin{block}{5-Fold Stratified Cross-Validation Results}
+        \textit{Evaluated on 166 ADReSSo speech samples using PCA feature fusion (318 features)}
     \end{block}
     
     \begin{table}
@@ -199,36 +200,36 @@
     \end{tabular}
     \end{table}
     
-    \begin{block}{Benchmark Comparison}
-        Our Logistic Regression (\textbf{70.52\%}) and PyTorch DNN (\textbf{70.48\%}) comfortably surpass the official IS2021 ADReSSo acoustic challenge baseline (\textbf{65.1\% accuracy}).
+    \begin{block}{Baseline Comparison}
+        Our Logistic Regression (\textbf{70.52\%}) and PyTorch DNN (\textbf{70.48\%}) outperform the official ADReSSo acoustic baseline (\textbf{65.1\% accuracy}).
     \end{block}
 \end{frame}
 
 % ===== Slide 11: Preliminary Results (Part 2) =====
-\begin{frame}{Performance Analysis \& Key Findings (40--50\% Stage)}
+\begin{frame}{Performance Analysis \& Key Findings}
     \begin{columns}[T]
         \column{0.52\textwidth}
-        \textbf{Key Insights from Baseline Stage:}
+        \textbf{Key Observations from Experiments:}
         \begin{itemize}
-            \item \textbf{Top Discriminative Ability:} Logistic Regression achieved the highest discriminatory capability with \textbf{0.7815 ROC-AUC} and 71.17\% F1-Score.
-            \item \textbf{Neural Network Baseline:} PyTorch 3-Layer DNN matched high accuracy (\textbf{70.48\%}) with balanced precision (0.7208) and recall (0.7235).
-            \item \textbf{Baseline Superiority:} Combining 123 physical acoustic parameters with Whisper deep embeddings proved vastly superior to standard eGeMAPS acoustic features alone (65.1\%).
+            \item \textbf{Strong Separation:} Logistic Regression achieved the best ROC-AUC (\textbf{0.7815}) and F1-score (0.7117), showing solid baseline performance.
+            \item \textbf{Neural Network Results:} PyTorch 3-Layer DNN achieved \textbf{70.48\% accuracy} with balanced precision (0.7208) and recall (0.7235).
+            \item \textbf{Improvement over Baseline:} Combining acoustic features with Whisper embeddings improved accuracy by \textbf{+5.4\%} over standard acoustic features (65.1\%).
         \end{itemize}
         
         \column{0.45\textwidth}
-        \textbf{Evaluation Visualizations:}
+        \textbf{Generated Results Files:}
         \begin{center}
             \fbox{\parbox{0.95\textwidth}{\centering
                 \small
-                \textbf{Generated & Verified Artifacts:} \\
+                \textbf{Saved Local Artifacts:} \\
                 \vspace{0.2cm}
                 • \texttt{model\_comparison\_phase1.csv} \\
-                • \texttt{roc\_auc_curves_phase1.png} \\
+                • \texttt{roc\_auc\_curves\_phase1.png} \\
                 • \texttt{cm\_logistic\_regression\_phase1.png} \\
                 • \texttt{cm\_dnn\_phase1.png} \\
                 • \texttt{cm\_svm\_rbf\_phase1.png} \\
                 \vspace{0.2cm}
-                \textit{(Saved in \texttt{results\_40\_50\_percent\_phase/})}
+                \textit{(Stored in \texttt{results\_40\_50\_percent\_phase/})}
             }}
         \end{center}
     \end{columns}
@@ -236,40 +237,39 @@
 
 % ===== Slide 12: Interim Summary/Conclusion =====
 \section{Summary}
-\begin{frame}{Interim Progress Summary \& Current Status}
+\begin{frame}{Interim Progress Summary}
     \begin{enumerate}
-        \item \textbf{Completed Foundation (40--50\% Stage):} Implemented end-to-end data preprocessing, 123-dim acoustic feature extraction, Whisper deep embedding extraction, and PCA fusion.
-        \item \textbf{Empirical Validation:} Achieved \textbf{70.52\% Accuracy} and \textbf{0.7815 ROC-AUC}, outperforming the official ADReSSo acoustic baseline (65.1\%).
-        \item \textbf{Code Architecture & Reproducibility:} Built modular codebase in \texttt{src/}, automated orchestrator \texttt{run_pipeline.py}, and synchronized all metrics with GitHub repository.
+        \item \textbf{Pipeline Completed:} Successfully built the audio cleaning, feature extraction (123 acoustic + Whisper), and PCA feature fusion modules.
+        \item \textbf{Good Baseline Performance:} Achieved \textbf{70.52\% accuracy} and \textbf{0.7815 ROC-AUC}, beating the official acoustic baseline (65.1\%).
+        \item \textbf{Code Organization:} Structured project into clean python scripts in \texttt{src/} with automated pipeline runner \texttt{run_pipeline.py}, saved locally and on GitHub.
     \end{enumerate}
     \vfill
     \begin{center}
-        \begin{block}{Project Status Checkpoint}
+        \begin{block}{Current Project Status}
             \centering
-            \textbf{Mid-Term Milestone Successfully Achieved} \\
-            Baseline Speech Processing & Classifier Pipeline Fully Verified.
+            \textbf{Mid-Term Checkpoint Completed} \\
+            Baseline Data Preprocessing and Classifier Models Implemented \& Verified.
         \end{block}
     \end{center}
 \end{frame}
 
-% ===== Slide 13: Completion Plan for Next Phase =====
-\section{Future Work}
-\begin{frame}{Completion Roadmap for Remaining 50\% Phase}
+% ===== Slide 13: Future Scope =====
+\section{Future Scope}
+\begin{frame}{Future Scope}
     \begin{table}
     \centering
     \small
     \begin{tabular}{p{0.22\textwidth}p{0.70\textwidth}}
         \toprule
-        \textbf{Advanced Phase} & \textbf{Technical Implementation Tasks} \\
+        \textbf{Next Phases} & \textbf{Planned Tasks} \\
         \midrule
-        \textbf{Phase 5: Fusion} & Gated Cross-Attention PyTorch Module (Bi-directional Query-Key-Value attention between acoustic and deep vectors). \\
-        \textbf{Phase 6: Multi-Task} & Multi-Task DNN for joint binary AD classification + continuous clinical MMSE score regression. \\
-        \textbf{Phase 7: XAI} & SHAP global summary plots, LIME local instance explanations, and frame-level attention timelines. \\
-        \textbf{Phase 8: Generalization} & Cross-Corpus zero-shot evaluation from Diagnosis domain to Progression domain. \\
-        \textbf{Phase 9 \& 10} & Optuna hyperparameter tuning, feature ablation studies, and challenge test set prediction export. \\
+        \textbf{Fusion} & Gated Cross-Attention module (dynamically weighting acoustic vs deep features). \\
+        \textbf{Multi-Task} & Multi-Task DNN to predict AD classification and MMSE cognitive test scores. \\
+        \textbf{XAI} & SHAP feature ranking and LIME explanations to make predictions clear to clinicians. \\
+        \textbf{Generalization} & Cross-corpus testing between Diagnosis and Progression datasets. \\
+        \textbf{Optimization} & Hyperparameter tuning using Optuna and feature ablation tests. \\
         \bottomrule
     \end{tabular}
-    \caption{Development plan for 100\% project execution.}
     \end{table}
 \end{frame}
 
