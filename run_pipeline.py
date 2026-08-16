@@ -9,9 +9,11 @@ Stage 5: Evaluation (5-fold Stratified CV, ROC curves, Confusion Matrices, Metri
 """
 
 import os
+import sys
 import glob
 import numpy as np
 import pandas as pd
+from tqdm import tqdm
 
 from src.preprocessing import AudioPreprocessor
 from src.feature_extraction import FeatureExtractionPipeline
@@ -23,7 +25,7 @@ def load_dataset_metadata(base_dir):
     """
     Find audio files and extract class labels without modifying any dataset files.
     :param base_dir: Root project directory
-    :return: (file_paths, labels, class_names)
+    :return: (file_paths, labels)
     """
     file_paths = []
     labels = []
@@ -67,24 +69,24 @@ def main():
     os.makedirs(results_dir, exist_ok=True)
     os.makedirs(processed_dir, exist_ok=True)
 
-    print("==========================================================================")
-    print("  ALZHEIMER'S DETECTION USING SPEECH PROCESSING - PIPELINE INITIALIZATION")
-    print("==========================================================================")
+    print("==========================================================================", flush=True)
+    print("  ALZHEIMER'S DETECTION USING SPEECH PROCESSING - PIPELINE INITIALIZATION", flush=True)
+    print("==========================================================================", flush=True)
 
     # 0. Load Dataset Metadata
     raw_files, labels = load_dataset_metadata(base_dir)
-    print(f"\n[Dataset Metadata] Found {len(raw_files)} audio samples (AD/Decline: {np.sum(labels == 1)}, CN/No-Decline: {np.sum(labels == 0)})")
+    print(f"\n[Dataset Metadata] Found {len(raw_files)} audio samples (AD/Decline: {np.sum(labels == 1)}, CN/No-Decline: {np.sum(labels == 0)})", flush=True)
 
     if len(raw_files) == 0:
-        print("Error: No .wav audio files found in expected dataset directories.")
+        print("Error: No .wav audio files found in expected dataset directories.", flush=True)
         return
 
     # STAGE 1: DATA PREPROCESSING
-    print("\n>>> STAGE 1: DATA PREPROCESSING (Resampling to 16kHz, Noise Reduction, VAD Silence Removal)")
+    print("\n>>> STAGE 1: DATA PREPROCESSING (Resampling to 16kHz, Noise Reduction, VAD Silence Removal)", flush=True)
     preprocessor = AudioPreprocessor(target_sr=16000, top_db=25, reduce_noise=True)
     processed_files = []
 
-    for raw_path in raw_files:
+    for raw_path in tqdm(raw_files, desc="Preprocessing Audio Files"):
         rel_path = os.path.relpath(raw_path, base_dir)
         out_path = os.path.join(processed_dir, rel_path)
         # Check if already preprocessed to save time
@@ -92,14 +94,14 @@ def main():
             preprocessor.process_file(raw_path, out_path)
         processed_files.append(out_path)
 
-    print(f"Preprocessed audio files saved to: {processed_dir}")
+    print(f"Preprocessed audio files saved to: {processed_dir}", flush=True)
 
     # STAGE 2: FEATURE EXTRACTION
-    print("\n>>> STAGE 2: FEATURE EXTRACTION (123 Acoustic Features + Deep Embeddings)")
+    print("\n>>> STAGE 2: FEATURE EXTRACTION (123 Acoustic Features + Deep Embeddings)", flush=True)
     cache_file = os.path.join(results_dir, "features_cache.npz")
     
     if os.path.exists(cache_file):
-        print(f"Loading cached features from {cache_file}...")
+        print(f"Loading cached features from {cache_file}...", flush=True)
         data = np.load(cache_file)
         acoustic_feats = data["acoustic"]
         deep_feats = data["deep"]
@@ -108,7 +110,7 @@ def main():
         fe_pipeline = FeatureExtractionPipeline(sr=16000)
         acoustic_list, deep_list = [], []
 
-        for p_file in processed_files:
+        for p_file in tqdm(processed_files, desc="Extracting Features"):
             y, sr = preprocessor.process_file(p_file)
             feats = fe_pipeline.extract_all(y)
             acoustic_list.append(feats["acoustic"]) # 123-dim
@@ -118,34 +120,34 @@ def main():
         deep_feats = np.array(deep_list)
 
         np.savez(cache_file, acoustic=acoustic_feats, deep=deep_feats, labels=labels)
-        print(f"Features successfully cached to {cache_file}")
+        print(f"Features successfully cached to {cache_file}", flush=True)
 
-    print(f"Acoustic features shape: {acoustic_feats.shape} (Expected: N x 123)")
-    print(f"Deep embeddings shape:   {deep_feats.shape} (Expected: N x 1024)")
+    print(f"Acoustic features shape: {acoustic_feats.shape} (Expected: N x 123)", flush=True)
+    print(f"Deep embeddings shape:   {deep_feats.shape} (Expected: N x 1024)", flush=True)
 
     # STAGE 3: FEATURE FUSION
-    print("\n>>> STAGE 3: FEATURE FUSION & DIMENSIONALITY REDUCTION (~318 dimensions)")
+    print("\n>>> STAGE 3: FEATURE FUSION & DIMENSIONALITY REDUCTION (~318 dimensions)", flush=True)
     fusion = FeatureFusion(target_dim=318, method="pca")
     concatenated_feats = fusion.concatenate_features(acoustic_feats, deep_feats)
-    print(f"Concatenated features shape: {concatenated_feats.shape} (123 + 1024 = 1147)")
+    print(f"Concatenated features shape: {concatenated_feats.shape} (123 + 1024 = 1147)", flush=True)
 
     fused_features = fusion.fit_transform(concatenated_feats)
-    print(f"Final Fused Features shape: {fused_features.shape} (Target ~318 dimensions)")
+    print(f"Final Fused Features shape: {fused_features.shape} (Target ~318 dimensions)", flush=True)
 
     # STAGE 4 & 5: CLASSIFICATION & EVALUATION
-    print("\n>>> STAGE 4 & 5: CLASSIFICATION & 5-FOLD CROSS-VALIDATION EVALUATION")
+    print("\n>>> STAGE 4 & 5: CLASSIFICATION & 5-FOLD CROSS-VALIDATION EVALUATION", flush=True)
     evaluator = Evaluator(output_dir=results_dir)
     df_summary, results = evaluator.evaluate_pipeline(fused_features, labels, n_splits=5)
 
-    print("\n==========================================================================")
-    print("                     EVALUATION RESULTS COMPARISON                        ")
-    print("==========================================================================")
-    print(df_summary.to_string(index=False))
+    print("\n==========================================================================", flush=True)
+    print("                     EVALUATION RESULTS COMPARISON                        ", flush=True)
+    print("==========================================================================", flush=True)
+    print(df_summary.to_string(index=False), flush=True)
 
     # Print Comparison with Baseline Papers Table
-    print("\n==========================================================================")
-    print("           COMPARISON WITH BASELINE PAPERS (ADReSSo Challenge)            ")
-    print("==========================================================================")
+    print("\n==========================================================================", flush=True)
+    print("           COMPARISON WITH BASELINE PAPERS (ADReSSo Challenge)            ", flush=True)
+    print("==========================================================================", flush=True)
     baseline_table = pd.DataFrame([
         {"Method / Study": "Linguistic Baseline (BERT)", "Acoustic / Deep": "Text / Transcripts", "Accuracy (%)": "76.7%", "F1-Score": "0.765"},
         {"Method / Study": "Acoustic Baseline (eGeMAPS + SVM)", "Acoustic / Deep": "eGeMAPS (Acoustic)", "Accuracy (%)": "65.1%", "F1-Score": "0.640"},
@@ -154,7 +156,7 @@ def main():
         {"Method / Study": "Our Proposed Pipeline (Fusion + DNN)", "Acoustic / Deep": "Acoustic (123) + Deep (1024)", "Accuracy (%)": df_summary[df_summary['Model']=='DNN']['Accuracy (%)'].values[0], "F1-Score": df_summary[df_summary['Model']=='DNN']['F1-Score'].values[0]},
         {"Method / Study": "Our Proposed Pipeline (Fusion + 1DCNN)", "Acoustic / Deep": "Acoustic (123) + Deep (1024)", "Accuracy (%)": df_summary[df_summary['Model']=='1DCNN']['Accuracy (%)'].values[0], "F1-Score": df_summary[df_summary['Model']=='1DCNN']['F1-Score'].values[0]},
     ])
-    print(baseline_table.to_string(index=False))
+    print(baseline_table.to_string(index=False), flush=True)
 
 
 if __name__ == "__main__":
