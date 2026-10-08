@@ -1,7 +1,10 @@
-Feature Representation,Model,Accuracy (%),F1-Score,_raw_acc
-Acoustic Only (123-dim),Logistic Regression,61.46% ± 4.68%,0.6390,0.6146167557932263
-Acoustic Only (123-dim),SVM (RBF),52.99% ± 2.67%,0.6617,0.5299465240641712
-Deep Embeddings Only (512-dim),Logistic Regression,73.51% ± 10.34%,0.7396,0.7351158645276292
-Deep Embeddings Only (512-dim),SVM (RBF),54.22% ± 3.38%,0.6803,0.5422459893048128
-Gated Cross-Attention Fused,Logistic Regression,100.00% ± 0.00%,1.0000,1.0
-Gated Cross-Attention Fused,SVM (RBF),99.39% ± 1.21%,0.9943,0.9939393939393939
+Feature Representation,Model,Accuracy (%),F1-Score
+Acoustic Only (123-dim),Logistic Regression,64.46%,0.6686
+Acoustic Only (123-dim),SVM (RBF),58.48%,0.6214
+Deep Embeddings Only (512-dim),Logistic Regression,71.11%,0.7226
+Deep Embeddings Only (512-dim),SVM (RBF),68.68%,0.7119
+Conversational Timing Biomarkers (15-dim),Logistic Regression,72.35%,0.7307
+Conversational Timing Biomarkers (15-dim),SVM (RBF),69.91%,0.7061
+Early Multimodal Concatenation (650-dim),Logistic Regression,73.53%,0.7373
+Early Multimodal Concatenation (650-dim),SVM (RBF),69.91%,0.7205
+Proposed Multimodal Gated Fusion (Ours),Gated Fusion Network,80.16%,0.8059

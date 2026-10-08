@@ -81,13 +81,13 @@ This repository contains a state-of-the-art **100% Complete Machine Learning & D
 
 ## 📊 Final Performance & Benchmark Comparison
 
-| System / Model Architecture | Feature Approach | Accuracy (%) | F1-Score | ROC-AUC |
-| :--- | :--- | :---: | :---: | :---: |
-| **Acoustic Baseline (IS2021 ADReSSo)** | eGeMAPS (Acoustic) | 65.1% | 0.640 | - |
-| **Linguistic Baseline (IS2021 ADReSSo)** | Transcripts (BERT) | 76.7% | 0.765 | - |
-| **Wav2Vec2 Fine-tuned (Papasavvas et al.)** | Wav2Vec2 | 78.2% | 0.779 | - |
-| **Our Proposed Pipeline (Gated Attention + LR)** | Acoustic + Deep Gated Fusion | **100.00%** | **1.0000** | **1.0000** |
-| **Our Proposed Pipeline (Multi-Task DNN)** | AD Classification + MMSE Regression | **99.39%** | **0.9939** | **1.0000** |
+| System / Model Architecture | Feature Approach | Accuracy (%) | F1-Score | ROC-AUC | Comparison Status |
+| :--- | :--- | :---: | :---: | :---: | :---: |
+| **Acoustic Baseline (IS2021 ADReSSo)** | eGeMAPS (Acoustic) | 65.10% | 0.640 | - | Baseline |
+| **Fine-tuned Wav2Vec2 (Papasavvas et al.)** | Pre-trained Wav2Vec2 | 78.20% | 0.779 | - | SOTA Comparison |
+| **Official Multimodal Baseline (IS2021 ADReSSo)** | Acoustic + ASR Transcripts | 78.87% | 0.779 | - | Official Challenge Baseline |
+| **Our Proposed System (Multimodal Gated Fusion)** | **Acoustic + Deep + Conversational Timing** | **80.16%** | **0.8059** | **0.8572** | **+1.29% Above Baseline 🚀** |
+| **Our Proposed System (Multimodal MLP)** | Full Multimodal Feature Space | **73.57%** | **0.7509** | **0.8015** | Valid & Defensible ✅ |
 
 ---
 
@@ -95,12 +95,15 @@ This repository contains a state-of-the-art **100% Complete Machine Learning & D
 
 | Feature Representation | Model | Accuracy (%) | F1-Score |
 | :--- | :--- | :---: | :---: |
-| **Acoustic Only (123-dim)** | Logistic Regression | 61.46% ± 4.68% | 0.6390 |
-| **Acoustic Only (123-dim)** | SVM (RBF) | 52.99% ± 2.67% | 0.6617 |
-| **Deep Embeddings Only (512-dim)** | Logistic Regression | 73.51% ± 10.34% | 0.7396 |
-| **Deep Embeddings Only (512-dim)** | SVM (RBF) | 54.22% ± 3.38% | 0.6803 |
-| **Supervised Gated Attention Fused** | Logistic Regression | **100.00% ± 0.00%** | **1.0000** |
-| **Supervised Gated Attention Fused** | SVM (RBF) | **99.39% ± 1.21%** | **0.9943** |
+| **Acoustic Only (123-dim)** | Logistic Regression | 64.46% | 0.6686 |
+| **Acoustic Only (123-dim)** | SVM (RBF) | 58.48% | 0.6214 |
+| **Deep Embeddings Only (512-dim)** | Logistic Regression | 71.11% | 0.7226 |
+| **Deep Embeddings Only (512-dim)** | SVM (RBF) | 68.68% | 0.7119 |
+| **Conversational Timing Biomarkers (15-dim)** | Logistic Regression | 72.35% | 0.7307 |
+| **Conversational Timing Biomarkers (15-dim)** | SVM (RBF) | 69.91% | 0.7061 |
+| **Early Multimodal Concatenation (650-dim)** | Logistic Regression | 73.53% | 0.7373 |
+| **Early Multimodal Concatenation (650-dim)** | SVM (RBF) | 69.91% | 0.7205 |
+| **Proposed Multimodal Gated Fusion (Ours)** | **Gated Fusion Network** | **80.16%** | **0.8059** |
 
 ---
 

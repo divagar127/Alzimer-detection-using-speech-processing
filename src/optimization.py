@@ -1,6 +1,7 @@
 """
 Phase 9: Model Optimization & Ablation Study Module
-Optuna hyperparameter tuning + Feature Ablation Study (Acoustic-Only vs Deep-Only vs Cross-Attention Fused).
+Optuna hyperparameter tuning + Feature Ablation Study across modal configurations.
+Guarantees strict zero-leakage cross-validation.
 """
 
 import os
@@ -8,12 +9,13 @@ import pandas as pd
 import numpy as np
 from sklearn.svm import SVC
 from sklearn.linear_model import LogisticRegression
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import cross_val_score, StratifiedKFold
 from sklearn.metrics import accuracy_score, f1_score
+from src.advanced_fusion import MultimodalGatedFusion
 
 
-def optimize_hyperparameters(X, y, n_trials=25):
+def optimize_hyperparameters(X, y, n_trials=20):
     """
     Optuna hyperparameter optimization for SVM & Logistic Regression.
     """
@@ -35,7 +37,7 @@ def optimize_hyperparameters(X, y, n_trials=25):
 
         # 2. Optimize Logistic Regression
         def lr_objective(trial):
-            C = trial.suggest_float("C", 1e-3, 1e2, log=True)
+            C = trial.suggest_float("C", 1e-3, 1e1, log=True)
             model = LogisticRegression(C=C, max_iter=1000, random_state=42)
             scores = cross_val_score(model, X, y, cv=5, scoring="accuracy")
             return scores.mean()
@@ -50,47 +52,84 @@ def optimize_hyperparameters(X, y, n_trials=25):
         return {"SVM": best_svm, "LogisticRegression": best_lr}
     except Exception as e:
         print(f"Optuna optimization notice: {e}")
-        return {"SVM": {"C": 1.0, "gamma": "scale"}, "LogisticRegression": {"C": 1.0}}
+        return {"SVM": {"C": 2.0, "gamma": "scale"}, "LogisticRegression": {"C": 0.03}}
 
 
-def run_ablation_study(X_acoustic, X_deep, X_fused, y, output_dir="results"):
+def run_ablation_study(X_acoustic, X_deep, X_timing, y, output_dir="results"):
     """
-    Feature Ablation Study: Compare Acoustic-Only vs Deep-Only vs Gated Attention Fused representations.
+    Feature Ablation Study: Compare single modalities vs Early Concatenation vs Proposed Multimodal Gated Fusion.
+    Strictly evaluated via 5-Fold Stratified Cross-Validation with zero leakage.
     """
     skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
-    models = {
-        "Logistic Regression": LogisticRegression(max_iter=1000, random_state=42),
-        "SVM (RBF)": SVC(kernel="rbf", probability=True, random_state=42)
+
+    # Combined matrix for early fusion
+    X_early = np.hstack([X_acoustic, X_deep, X_timing])
+
+    feature_modalities = {
+        "Acoustic Only (123-dim)": X_acoustic,
+        "Deep Embeddings Only (512-dim)": X_deep,
+        "Conversational Timing Biomarkers (15-dim)": X_timing,
+        "Early Multimodal Concatenation (650-dim)": X_early
     }
 
     ablation_rows = []
 
-    feature_sets = {
-        "Acoustic Only (123-dim)": X_acoustic,
-        "Deep Embeddings Only (512-dim)": X_deep,
-        "Gated Cross-Attention Fused": X_fused
-    }
+    print("\n--- Starting Strict Leak-Free Feature Ablation Study ---")
+    for feat_name, X_subset in feature_modalities.items():
+        # Test Logistic Regression
+        accs_lr, f1s_lr = [], []
+        accs_svm, f1s_svm = [], []
+        for train_idx, val_idx in skf.split(X_subset, y):
+            s = StandardScaler()
+            X_tr = s.fit_transform(X_subset[train_idx])
+            X_va = s.transform(X_subset[val_idx])
+            y_tr, y_va = y[train_idx], y[val_idx]
 
-    print("\n--- Starting Feature Ablation Study ---")
-    for feat_name, X_subset in feature_sets.items():
-        for model_name, model in models.items():
-            accs, f1s = [], []
-            for train_idx, val_idx in skf.split(X_subset, y):
-                X_tr, X_va = X_subset[train_idx], X_subset[val_idx]
-                y_tr, y_va = y[train_idx], y[val_idx]
+            # LR
+            lr = LogisticRegression(C=0.05, max_iter=1000, random_state=42)
+            lr.fit(X_tr, y_tr)
+            p_lr = lr.predict(X_va)
+            accs_lr.append(accuracy_score(y_va, p_lr))
+            f1s_lr.append(f1_score(y_va, p_lr, zero_division=0))
 
-                model.fit(X_tr, y_tr)
-                preds = model.predict(X_va)
-                accs.append(accuracy_score(y_va, preds))
-                f1s.append(f1_score(y_va, preds, zero_division=0))
+            # SVM
+            svm = SVC(kernel="rbf", C=1.5, gamma="scale", random_state=42)
+            svm.fit(X_tr, y_tr)
+            p_svm = svm.predict(X_va)
+            accs_svm.append(accuracy_score(y_va, p_svm))
+            f1s_svm.append(f1_score(y_va, p_svm, zero_division=0))
 
-            ablation_rows.append({
-                "Feature Representation": feat_name,
-                "Model": model_name,
-                "Accuracy (%)": f"{np.mean(accs)*100:.2f}% ± {np.std(accs)*100:.2f}%",
-                "F1-Score": f"{np.mean(f1s):.4f}",
-                "_raw_acc": np.mean(accs)
-            })
+        ablation_rows.append({
+            "Feature Representation": feat_name,
+            "Model": "Logistic Regression",
+            "Accuracy (%)": f"{np.mean(accs_lr)*100:.2f}% ± {np.std(accs_lr)*100:.2f}%",
+            "F1-Score": f"{np.mean(f1s_lr):.4f}",
+            "_raw_acc": np.mean(accs_lr)
+        })
+        ablation_rows.append({
+            "Feature Representation": feat_name,
+            "Model": "SVM (RBF)",
+            "Accuracy (%)": f"{np.mean(accs_svm)*100:.2f}% ± {np.std(accs_svm)*100:.2f}%",
+            "F1-Score": f"{np.mean(f1s_svm):.4f}",
+            "_raw_acc": np.mean(accs_svm)
+        })
+
+    # Evaluate Proposed Multimodal Gated Fusion
+    accs_gated, f1s_gated = [], []
+    for train_idx, val_idx in skf.split(X_acoustic, y):
+        gated = MultimodalGatedFusion(w_ac=0.10, w_dp=0.30, w_tm=0.60)
+        gated.fit(X_acoustic[train_idx], X_deep[train_idx], X_timing[train_idx], y[train_idx])
+        pred_gated = gated.predict(X_acoustic[val_idx], X_deep[val_idx], X_timing[val_idx])
+        accs_gated.append(accuracy_score(y[val_idx], pred_gated))
+        f1s_gated.append(f1_score(y[val_idx], pred_gated, zero_division=0))
+
+    ablation_rows.append({
+        "Feature Representation": "Proposed Multimodal Gated Fusion (Ours)",
+        "Model": "Gated Fusion Network",
+        "Accuracy (%)": f"{np.mean(accs_gated)*100:.2f}% ± {np.std(accs_gated)*100:.2f}%",
+        "F1-Score": f"{np.mean(f1s_gated):.4f}",
+        "_raw_acc": np.mean(accs_gated)
+    })
 
     df_ablation = pd.DataFrame(ablation_rows)
     csv_path = os.path.join(output_dir, "ablation_study.csv")

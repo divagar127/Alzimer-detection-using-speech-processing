@@ -16,6 +16,7 @@ import torch.optim as optim
 from torch.utils.data import DataLoader, TensorDataset
 from sklearn.model_selection import StratifiedKFold
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, roc_auc_score, root_mean_squared_error
+from sklearn.preprocessing import StandardScaler
 
 
 def load_mmse_scores(base_dir):
@@ -91,7 +92,10 @@ def train_eval_multitask(X, y_cls, y_mmse, n_splits=5, epochs=50, lr=0.001):
     accs, precs, recs, f1s, aucs, rmses = [], [], [], [], [], []
 
     for fold, (train_idx, val_idx) in enumerate(skf.split(X, y_cls), 1):
-        X_train, X_val = X[train_idx], X[val_idx]
+        scaler = StandardScaler()
+        X_train = scaler.fit_transform(X[train_idx])
+        X_val = scaler.transform(X[val_idx])
+
         y_c_tr, y_c_val = y_cls[train_idx], y_cls[val_idx]
         y_m_tr, y_m_val = y_mmse[train_idx], y_mmse[val_idx]
 

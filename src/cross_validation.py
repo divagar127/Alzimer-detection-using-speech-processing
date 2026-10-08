@@ -25,17 +25,22 @@ def cross_corpus_evaluation(X_train_diag, y_train_diag, X_test_prog, y_test_prog
     print(f"Training set (Diagnosis Task):   {X_train_diag.shape[0]} samples")
     print(f"Testing set  (Progression Task): {X_test_prog.shape[0]} samples")
 
+    from sklearn.preprocessing import StandardScaler
+    scaler = StandardScaler()
+    X_train_s = scaler.fit_transform(X_train_diag)
+    X_test_s = scaler.transform(X_test_prog)
+
     for name, model in ml_models.items():
         # 1. Fit on Diagnosis dataset
-        model.fit(X_train_diag, y_train_diag)
+        model.fit(X_train_s, y_train_diag)
 
         # 2. In-corpus self-eval score
-        diag_preds = model.predict(X_train_diag)
+        diag_preds = model.predict(X_train_s)
         diag_acc = accuracy_score(y_train_diag, diag_preds)
 
         # 3. Cross-corpus evaluation on Progression dataset
-        prog_preds = model.predict(X_test_prog)
-        prog_probs = model.predict_proba(X_test_prog)[:, 1] if hasattr(model, "predict_proba") else prog_preds
+        prog_preds = model.predict(X_test_s)
+        prog_probs = model.predict_proba(X_test_s)[:, 1] if hasattr(model, "predict_proba") else prog_preds
 
         acc = accuracy_score(y_test_prog, prog_preds)
         prec = precision_score(y_test_prog, prog_preds, zero_division=0)

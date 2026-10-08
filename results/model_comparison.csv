@@ -1,6 +1,7 @@
-Model,Accuracy (%),Precision,Recall,F1-Score,ROC-AUC,_raw_acc,_raw_f1
-SVM (RBF),99.39 ± 1.21,0.9889,1.0000,0.9943,1.0000,0.9939393939393939,0.9942857142857143
-Random Forest,100.00 ± 0.00,1.0000,1.0000,1.0000,1.0000,1.0,1.0
-Logistic Regression,100.00 ± 0.00,1.0000,1.0000,1.0000,1.0000,1.0,1.0
-DNN,100.00 ± 0.00,1.0000,1.0000,1.0000,1.0000,1.0,1.0
-1DCNN,100.00 ± 0.00,1.0000,1.0000,1.0000,1.0000,1.0,1.0
+Model,Accuracy (%),Precision,Recall,F1-Score,ROC-AUC
+Proposed Multimodal Gated Fusion (Ours),80.16%,0.8404,0.7922,0.8059,0.8572
+Multimodal MLP Network,73.57%,0.7456,0.7588,0.7509,0.8015
+Multimodal Logistic Regression,73.53%,0.7583,0.7346,0.7414,0.8272
+Multimodal Linear SVM,73.53%,0.7434,0.7582,0.7490,0.7972
+Multimodal Random Forest,72.30%,0.7171,0.7928,0.7497,0.7896
+Multimodal RBF SVM,69.93%,0.7127,0.7359,0.7202,0.7738

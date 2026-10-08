@@ -21,7 +21,7 @@ from tqdm import tqdm
 
 from src.preprocessing import AudioPreprocessor
 from src.feature_extraction import FeatureExtractionPipeline
-from src.advanced_fusion import GatedAttentionFusionPipeline
+from src.advanced_fusion import MultimodalGatedFusion
 from src.evaluation import Evaluator
 from src.multi_task_model import load_mmse_scores, train_eval_multitask
 from src.explainability import ModelExplainer
@@ -173,21 +173,24 @@ def main():
         np.savez(cache_file, ac_diag=ac_diag, dp_diag=dp_diag, ac_prog=ac_prog, dp_prog=dp_prog, ac_test=ac_test, dp_test=dp_test)
         print(f"Features cached to {cache_file}", flush=True)
 
-    # STAGE 3: GATED CROSS-ATTENTION FUSION
-    print("\n>>> STAGE 3: ADVANCED SUPERVISED GATED CROSS-ATTENTION FUSION", flush=True)
-    attn_fusion = GatedAttentionFusionPipeline(acoustic_dim=123, deep_dim=dp_diag.shape[1], fused_dim=318)
-    fused_diag = attn_fusion.fit_transform(ac_diag, dp_diag, diag_labels)
-    fused_prog = attn_fusion.transform(ac_prog, dp_prog)
-    fused_test = attn_fusion.transform(ac_test, dp_test) if len(ac_test) > 0 else np.zeros((0, fused_diag.shape[1]))
+    # STAGE 2.5: CONVERSATIONAL TIMING BIOMARKERS
+    print("\n>>> STAGE 2.5: CONVERSATIONAL TIMING & PAUSE BIOMARKERS (From Diarization)", flush=True)
+    from src.advanced_fusion import extract_timing_biomarkers, MultimodalGatedFusion
+    tm_diag = extract_timing_biomarkers(base_dir, filenames, diag_labels, task="diagnosis")
+    prog_ids = [os.path.splitext(os.path.basename(f))[0] for f in prog_files]
+    tm_prog = extract_timing_biomarkers(base_dir, prog_ids, prog_labels, task="progression")
+    tm_test = extract_timing_biomarkers(base_dir, test_ids, task="test")
+    print(f"Timing biomarkers extracted -> Diagnosis: {tm_diag.shape}, Progression: {tm_prog.shape}, Test: {tm_test.shape}", flush=True)
 
-    print(f"Diagnosis Fused Features shape:   {fused_diag.shape} (Supervised Gated Attention {fused_diag.shape[1]}-dim)", flush=True)
-    print(f"Progression Fused Features shape: {fused_prog.shape} (Supervised Gated Attention {fused_prog.shape[1]}-dim)", flush=True)
-    print(f"Test Set Fused Features shape:    {fused_test.shape} (Supervised Gated Attention {fused_test.shape[1]}-dim)", flush=True)
+    # Combined Multimodal Matrices
+    X_multimodal_diag = np.hstack([ac_diag, dp_diag, tm_diag])
+    X_multimodal_prog = np.hstack([ac_prog, dp_prog, tm_prog])
+    X_multimodal_test = np.hstack([ac_test, dp_test, tm_test]) if len(ac_test) > 0 else np.zeros((0, X_multimodal_diag.shape[1]))
 
-    # STAGE 4 & 5: CLASSIFICATION & EVALUATION
-    print("\n>>> STAGE 4 & 5: CLASSIFICATION & 5-FOLD CROSS-VALIDATION EVALUATION", flush=True)
+    # STAGE 3, 4 & 5: MULTIMODAL GATED FUSION & ZERO-LEAKAGE 5-FOLD CV
+    print("\n>>> STAGE 3, 4 & 5: MULTIMODAL GATED FUSION & 5-FOLD STRATIFIED CV (Zero-Leakage)", flush=True)
     evaluator = Evaluator(output_dir=results_dir)
-    df_summary, cv_results = evaluator.evaluate_pipeline(fused_diag, diag_labels, n_splits=5)
+    df_summary, cv_results = evaluator.evaluate_multimodal_pipeline(ac_diag, dp_diag, tm_diag, diag_labels, n_splits=5)
 
     print("\n==========================================================================", flush=True)
     print("                5-FOLD CROSS-VALIDATION EVALUATION SUMMARY                 ", flush=True)
@@ -196,38 +199,50 @@ def main():
 
     # PHASE 6: MULTI-TASK LEARNING
     print("\n>>> PHASE 6: MULTI-TASK LEARNING (AD Classification + MMSE Score Regression)", flush=True)
-    mt_metrics = train_eval_multitask(fused_diag, diag_labels, mmse_scores, n_splits=5)
+    mt_metrics = train_eval_multitask(X_multimodal_diag, diag_labels, mmse_scores, n_splits=5)
     print(f"Multi-Task DNN Results -> Accuracy: {mt_metrics['Accuracy (%)']}, F1: {mt_metrics['F1-Score']}, ROC-AUC: {mt_metrics['ROC-AUC']}, MMSE RMSE: {mt_metrics['MMSE RMSE']}", flush=True)
 
     # PHASE 7: EXPLAINABLE AI (XAI)
     print("\n>>> PHASE 7: EXPLAINABLE AI (SHAP & LIME Feature Attribution)", flush=True)
     explainer = ModelExplainer(output_dir=plots_dir)
-    feature_names = [f"Acoustic_{i}" for i in range(123)] + [f"Deep_Embedding_{j}" for j in range(fused_diag.shape[1] - 123)]
+    feature_names = (
+        [f"Acoustic_MFCC_{i}" for i in range(120)] + ["Pitch_Mean", "Pitch_Std", "HNR_Var"] +
+        [f"Spectral_Mel_{j}" for j in range(dp_diag.shape[1])] +
+        ["Total_Duration", "PAR_Duration", "INV_Duration", "Silence_Duration",
+         "PAR_Ratio", "INV_Ratio", "Silence_Ratio", "PAR_Turns", "INV_Turns",
+         "Mean_PAR_Dur", "Std_PAR_Dur", "Max_PAR_Dur", "Mean_INV_Dur", "Speech_Silence_Ratio", "Mean_Pause"]
+    )
     
+    from sklearn.preprocessing import StandardScaler
     from sklearn.linear_model import LogisticRegression
-    sample_model = LogisticRegression(max_iter=1000, random_state=42)
-    sample_model.fit(fused_diag, diag_labels)
+    scaler_full = StandardScaler()
+    X_diag_scaled = scaler_full.fit_transform(X_multimodal_diag)
 
-    explainer.shap_analysis(sample_model, fused_diag, fused_diag[:30], feature_names=feature_names)
-    explainer.lime_explanation(sample_model, fused_diag, fused_diag[0], feature_names=feature_names)
+    sample_model = LogisticRegression(C=0.03, max_iter=1000, random_state=42)
+    sample_model.fit(X_diag_scaled, diag_labels)
+
+    explainer.shap_analysis(sample_model, X_diag_scaled, X_diag_scaled[:30], feature_names=feature_names)
+    explainer.lime_explanation(sample_model, X_diag_scaled, X_diag_scaled[0], feature_names=feature_names)
     explainer.visualize_attention_timeline(np.sin(np.linspace(0, 10, 100))*0.3 + 0.6, np.linspace(0, 10, 100))
 
     # PHASE 8: CROSS-CORPUS VALIDATION
     print("\n>>> PHASE 8: CROSS-CORPUS VALIDATION (Diagnosis -> Progression Generalization)", flush=True)
-    df_cross = cross_corpus_evaluation(fused_diag, diag_labels, fused_prog, prog_labels)
+    df_cross = cross_corpus_evaluation(X_multimodal_diag, diag_labels, X_multimodal_prog, prog_labels)
     print(df_cross.to_string(index=False), flush=True)
 
     # PHASE 9: HYPERPARAMETER OPTIMIZATION & ABLATION STUDY
     print("\n>>> PHASE 9: HYPERPARAMETER OPTIMIZATION & FEATURE ABLATION STUDY", flush=True)
-    best_params = optimize_hyperparameters(fused_diag, diag_labels, n_trials=20)
-    df_ablation = run_ablation_study(ac_diag, dp_diag, fused_diag, diag_labels, output_dir=results_dir)
+    best_params = optimize_hyperparameters(X_diag_scaled, diag_labels, n_trials=20)
+    df_ablation = run_ablation_study(ac_diag, dp_diag, tm_diag, diag_labels, output_dir=results_dir)
     print("\nFeature Ablation Comparison Matrix:", flush=True)
     print(df_ablation.to_string(index=False), flush=True)
 
     # PHASE 10: TEST SET PREDICTIONS EXPORT
-    if len(fused_test) > 0:
+    if len(X_multimodal_test) > 0:
         print("\n>>> PHASE 10: GENERATING TEST SET PREDICTIONS FOR CHALLENGE SUBMISSION", flush=True)
-        test_preds = sample_model.predict(fused_test)
+        gated_pipeline = MultimodalGatedFusion(w_ac=0.10, w_dp=0.30, w_tm=0.60)
+        gated_pipeline.fit(ac_diag, dp_diag, tm_diag, diag_labels)
+        test_preds = gated_pipeline.predict(ac_test, dp_test, tm_test)
         df_test = pd.DataFrame({"ID": test_ids, "Prediction": test_preds})
         test_csv_path = os.path.join(results_dir, "test_predictions_task3.csv")
         df_test.to_csv(test_csv_path, index=False)
@@ -238,11 +253,11 @@ def main():
     print("             FINAL SYSTEM PERFORMANCE vs ADReSSo BASELINES                ", flush=True)
     print("==========================================================================", flush=True)
     final_table = pd.DataFrame([
-        {"Method / Study": "Acoustic Baseline (eGeMAPS + SVM)", "Approach": "eGeMAPS Acoustic", "Accuracy (%)": "65.1%", "F1-Score": "0.640"},
-        {"Method / Study": "Linguistic Baseline (BERT)", "Approach": "Transcripts / Text", "Accuracy (%)": "76.7%", "F1-Score": "0.765"},
+        {"Method / Study": "Acoustic Baseline (eGeMAPS + SVM)", "Approach": "eGeMAPS Acoustic Only", "Accuracy (%)": "65.1%", "F1-Score": "0.640"},
+        {"Method / Study": "Official Multimodal Challenge Baseline (IS2021 ADReSSo)", "Approach": "Acoustic + ASR Transcripts", "Accuracy (%)": "78.87%", "F1-Score": "0.779"},
         {"Method / Study": "Wav2Vec2 Fine-tuned (Papasavvas et al.)", "Approach": "Wav2Vec2 Fine-tuned", "Accuracy (%)": "78.2%", "F1-Score": "0.779"},
-        {"Method / Study": "Our Proposed Pipeline (Supervised Gated Attention + LR)", "Approach": "Acoustic + Deep Gated Fusion", "Accuracy (%)": df_summary[df_summary['Model']=='Logistic Regression']['Accuracy (%)'].values[0], "F1-Score": df_summary[df_summary['Model']=='Logistic Regression']['F1-Score'].values[0]},
-        {"Method / Study": "Our Proposed Pipeline (Multi-Task DNN)", "Approach": "AD Classification + MMSE Regression", "Accuracy (%)": mt_metrics["Accuracy (%)"], "F1-Score": mt_metrics["F1-Score"]},
+        {"Method / Study": "Our Proposed Multimodal Gated Fusion (Ours)", "Approach": "Acoustic + Deep + Conversational Timing", "Accuracy (%)": df_summary[df_summary['Model']=='Proposed Multimodal Gated Fusion (Ours)']['Accuracy (%)'].values[0], "F1-Score": df_summary[df_summary['Model']=='Proposed Multimodal Gated Fusion (Ours)']['F1-Score'].values[0]},
+        {"Method / Study": "Our Proposed Multimodal MLP Network", "Approach": "Full Multimodal Feature Space", "Accuracy (%)": df_summary[df_summary['Model']=='Multimodal MLP Network']['Accuracy (%)'].values[0], "F1-Score": df_summary[df_summary['Model']=='Multimodal MLP Network']['F1-Score'].values[0]},
     ])
     print(final_table.to_string(index=False), flush=True)
 
