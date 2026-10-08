@@ -130,6 +130,9 @@ This repository contains a state-of-the-art **100% Complete Machine Learning & D
 │   ├── ablation_study.csv          # Feature ablation study CSV
 │   ├── test_predictions_task3.csv  # Challenge test set predictions
 │   └── plots/                      # Saved SHAP, LIME, ROC, CM, and timeline plots
+├── scripts/                        # Utility scripts for plot generation and analysis
+├── final_project_report.tex        # 10-Page IEEEtran LaTeX Final Technical Report
+├── final_project_report.md         # Full Markdown Technical Report & Clinical Documentation
 ├── requirements.txt                # Python dependencies
 ├── run_pipeline.py                 # Main execution script
 └── README.md                       # Project documentation

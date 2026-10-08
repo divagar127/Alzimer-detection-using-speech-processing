@@ -39,7 +39,7 @@ class Evaluator:
         skf = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=42)
 
         models_to_evaluate = [
-            "Proposed Multimodal Gated Fusion (Ours)",
+            "Proposed Multimodal Gated Fusion",
             "Multimodal MLP Network",
             "Multimodal Logistic Regression",
             "Multimodal Linear SVM",
@@ -69,7 +69,7 @@ class Evaluator:
             gated_fusion.fit(ac_diag[train_idx], dp_diag[train_idx], tm_diag[train_idx], y_tr)
             p_gated = gated_fusion.predict_proba(ac_diag[val_idx], dp_diag[val_idx], tm_diag[val_idx])
             pred_gated = (p_gated >= 0.5).astype(int)
-            self._record_fold(results["Proposed Multimodal Gated Fusion (Ours)"], y_va, pred_gated, p_gated)
+            self._record_fold(results["Proposed Multimodal Gated Fusion"], y_va, pred_gated, p_gated)
 
             # Combined multimodal matrix for classical baselines
             X_tr_all = np.hstack([ac_tr, dp_tr, tm_tr])
@@ -191,7 +191,7 @@ class Evaluator:
             y_prob_all = np.concatenate(res["y_prob"])
             fpr, tpr, _ = roc_curve(y_true_all, y_prob_all)
             mean_auc = np.mean(res["auc"])
-            lw = 2.5 if "Ours" in model_name else 1.5
+            lw = 2.5 if "Proposed" in model_name else 1.5
             plt.plot(fpr, tpr, label=f"{model_name} (AUC = {mean_auc:.3f})", lw=lw)
 
         plt.plot([0, 1], [0, 1], "k--", label="Random Baseline (AUC = 0.50)")

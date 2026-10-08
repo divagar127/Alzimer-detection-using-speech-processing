@@ -1,5 +1,5 @@
 Model,Accuracy (%),Precision,Recall,F1-Score,ROC-AUC
-Proposed Multimodal Gated Fusion (Ours),80.16%,0.8404,0.7922,0.8059,0.8572
+Proposed Multimodal Gated Fusion,80.16%,0.8404,0.7922,0.8059,0.8572
 Multimodal MLP Network,73.57%,0.7456,0.7588,0.7509,0.8015
 Multimodal Logistic Regression,73.53%,0.7583,0.7346,0.7414,0.8272
 Multimodal Linear SVM,73.53%,0.7434,0.7582,0.7490,0.7972
